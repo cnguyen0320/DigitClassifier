@@ -3,30 +3,15 @@
 
 import random
 import NN
+from Instance import Instance
 
 numAttributes = 256     # number of attributes per training image
 numDigits = 10          # 0-9
 numHiddenNodes = 10     # number of hidden nodes per layer in the NN
 learning_rate = 0.5     # learning rate has to be between 0 and 1
-maxEpoch = 0            # number of passes to do in the neural network training
+maxEpoch = 5            # number of passes to do in the neural network training
 seed = None             # use a seed (not None) to get consistent results from run to run
 training_file = 'train.txt' # name of the file with training data
-
-
-class Instance():
-    attributes = list
-    class_value = int
-    
-    def __init__(self, attribute_list, class_value):
-        self.attributes=attribute_list
-        self.value = class_value
-    
-    def add_attr(self, value):
-        self.attributes.append(value)
-        
-    def getValue(self):
-        return self.class_value
-
 
 def parseTrainSet(training_file):
     
@@ -86,6 +71,6 @@ if __name__ == "__main__":
     (hiddenWeights, outputWeights) = randomizeWeights(seed)
 
     #create a neural network with the input parameters
-    neural_net = NN.network(trainingSet, numHiddenNodes, learning_rate, maxEpoch, seed, hiddenWeights, outputWeights)
+    neural_net = NN.Network(trainingSet,numAttributes,numDigits, numHiddenNodes, learning_rate, maxEpoch, hiddenWeights, outputWeights, seed)
 
     neural_net.train();
