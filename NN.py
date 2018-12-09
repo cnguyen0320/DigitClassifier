@@ -4,17 +4,6 @@
 """
 
 import math, random
-from Instance import Instance
-
-#Defines the node types
-INPUT_NODE = 0
-BIAS_HIDDEN = 1
-HIDDEN = 2
-BIAS_OUTPUT = 3
-OUTPUT = 4
-
-node_types = [INPUT_NODE, BIAS_HIDDEN, HIDDEN, BIAS_OUTPUT, OUTPUT]
-
 
 class Network():
     """
@@ -22,14 +11,7 @@ class Network():
     
     It can be used to train a training set or predict a score given an input
     """
-    
-    learningRate = None
-    maxEpoch = None
-    seed = None
-    inputNodes = None
-    hiddenNodes = None
-    outputNodes = None
-    
+        
     def __init__(self, trainingSet, number_of_attributes, number_of_values, number_of_hidden_nodes, learningRate, maxEpoch, hiddenWeights, outputWeights, seed = None):
         self.trainingSet = trainingSet
         self.numAttributes = number_of_attributes
@@ -45,15 +27,15 @@ class Network():
         #Create input layer nodes
         self.inputNodes = []
         for x in range(0, self.numAttributes):
-            self.inputNodes.append(Node(INPUT_NODE))
+            self.inputNodes.append(Node(Node.INPUT_NODE))
         
         #Creates the bias node to the hidden layer
-        self.inputNodes.append(Node(BIAS_HIDDEN))
+        self.inputNodes.append(Node(Node.BIAS_HIDDEN))
         
         #Create the hidden layer nodes
         self.hiddenNodes = []
         for x in range(0, self.numHiddenNodes):
-            node = Node(HIDDEN)
+            node = Node(Node.HIDDEN)
             for y in range(0, len(self.inputNodes)):
                 nwp = NodeWeightPair(self.inputNodes[y], hiddenWeights[x][y])
                 node.parents.append(nwp)
@@ -61,34 +43,74 @@ class Network():
         
         
         #Create the bias node to the output layer
-        self.hiddenNodes.append(Node(BIAS_OUTPUT))
+        self.hiddenNodes.append(Node(Node.BIAS_OUTPUT))
         
         #Create output layer nodes
         self.outputNodes = []
         for x in range(0, self.numValues):
-            node = Node(OUTPUT)
+            node = Node(Node.OUTPUT)
             for y in range(0, len(self.hiddenNodes)):
                 nwp = NodeWeightPair(self.hiddenNodes[y], outputWeights[x][y])
                 node.parents.append(nwp)
             self.outputNodes.append(node)
 
-    def train(self):
+
+
+    def train(self, save_weights = True, loss_output = False):
+        """Computes forward and backward passes for the NN to set the weights"""
         #train for max epochs
         for epoch in range(0, self.maxEpoch):
             
             #randomize the training set order
             random.shuffle(self.trainingSet)
+            totalLoss = 0.0
             
             #for each training instance, compute forward and backward pass
             for instance in self.trainingSet:
                 self.forwardPass(instance)
                 self.backwardPass(instance)
-        
-        for
-        
-        print('training complete for', self.maxEpoch, 'epochs')
-        
             
+            if loss_output:
+                #for each instance, compute a loss
+                for inst in self.trainingSet:
+                    totalLoss = totalLoss + self.loss(inst)
+                
+                totalLoss = totalLoss/len(self.trainingSet)
+                
+                print("Epoch", epoch, "complete with loss:", format(totalLoss, 'e'))
+            
+        #save the weights into the file
+        if save_weights: 
+            self.saveWeights()
+        
+        
+    def predict(self, instance):
+        """Returns the prediction for a given input"""
+        self.forwardPass(instance)
+        
+        #go through the outputs and find the maximum index
+        maxIndex = 0
+        maxVal = float("-inf")
+        
+        for i in range(0, len(self.outputNodes)):
+            current = self.outputNodes[i].outputValue
+            
+            if current > maxVal:
+                maxIndex = i
+                maxVal = current
+        
+        return maxIndex
+
+
+
+    def loss(self, instance):
+        sum = 0
+        self.forwardPass(instance)
+        for x in range(0, len(self.outputNodes)):
+            logPredicted = math.log(self.outputNodes[x].outputValue)
+            if x == instance.value:
+                sum = sum + logPredicted
+        return sum
 
     def forwardPass(self, instance):
         """Computes forward pass to get outputs for a given input"""
@@ -131,6 +153,28 @@ class Network():
             node.updateWeight(self.learningRate)
 
 
+    def saveWeights(self):
+            
+        file = open('hiddenweights.txt', 'w')
+        file.write('#hidden: ' + str(len(self.hiddenNodes)) +'\n')
+        file.write('#output: ' + str(len(self.outputNodes)) +'\n')
+        for node in self.hiddenNodes:
+            for nwp in node.parents:
+                file.write(str(nwp.weight))
+                file.write(' ')
+            file.write('\n')
+        file.close()
+        
+        file = open('outputweights.txt', 'w')
+        file.write('#hidden: ' + str(len(self.hiddenNodes)) +'\n')
+        file.write('#output: ' + str(len(self.outputNodes)) +'\n')
+        for node in self.outputNodes:
+            for nwp in node.parents:
+                file.write(str(nwp.weight))
+                file.write(' ')
+            file.write('\n')
+        file.close()
+
 
 class NodeWeightPair():
     """
@@ -141,9 +185,18 @@ class NodeWeightPair():
     
     def __init__(self, node, weight):
         self.node = node
-        self.weight = weight
+        self.weight = float(weight)
 
 class Node():
+    #Defines the node types
+    INPUT_NODE = 0
+    BIAS_HIDDEN = 1
+    HIDDEN = 2
+    BIAS_OUTPUT = 3
+    OUTPUT = 4
+    
+    node_types = [INPUT_NODE, BIAS_HIDDEN, HIDDEN, BIAS_OUTPUT, OUTPUT]
+    
     """
     Class for neural network node
     
@@ -159,48 +212,54 @@ class Node():
     def __init__(self, node_type):
         
         """Creates a node with specified type"""
-        assert node_type in node_types #make sure node specified is included as the type
+        assert node_type in Node.node_types #make sure node specified is included as the type
         self.node_type = node_type
         self.parents = []
         
+        #Set the input/output of all bias nodes to 1
+        if self.node_type == Node.BIAS_OUTPUT or self.node_type == Node.BIAS_HIDDEN:
+            self.outputValue = 1.0
+            self.inputValue = 1.0
+        
     def setInput(self, input_value):
-        """Sets the input value for input nodes"""
-        if self.node_type == INPUT_NODE:
+        """Sets the input/output value for input nodes and """
+        if self.node_type == Node.INPUT_NODE:
             self.inputValue = input_value
+            self.outputValue = input_value
     
     
     
     def calculateOutput(self):
         """Computes output for the hidden or output layer nodes"""
         
-        if (self.node_type == HIDDEN or self.node_type == OUTPUT):
-            weightedSum = 0
+        if (self.node_type == Node.HIDDEN or self.node_type == Node.OUTPUT):
+            weightedSum = 0.0
             for parent in self.parents:
                 weightedSum = weightedSum + parent.node.outputValue * parent.weight
         
             #compute output for hidden layer node
-            if(self.node_type == HIDDEN):
+            if(self.node_type == Node.HIDDEN):
                 self.outputValue = max(0, weightedSum) 
                 
             #compute output for output layer node
             else:
-                self.outputValue = math.exp(weightedSum) 
-                
+                self.outputValue = math.exp(weightedSum)         
                 
     
     def calculateSoftMax(self, total):
         """Computes softmax for the output layer nodes"""
-        if self.node_type == OUTPUT:
+        if self.node_type == Node.OUTPUT:
             self.outputValue = self.outputValue/total
     
     
     def calculateDeltaOutput(self, targetOutput):
-        if self.node_type == OUTPUT:
+        if self.node_type == Node.OUTPUT:
             self.delta = targetOutput - self.outputValue
+
     
     
     def calculateDeltaHidden(self, outputNodes):
-        if self.node_type == HIDDEN:
+        if self.node_type == Node.HIDDEN:
             if self.outputValue == 0:
                 self.delta = 0
             else:
@@ -212,6 +271,7 @@ class Node():
                             summation += nwp.parents[i].weight * nwp.delta
                 
                 self.delta = summation
+
     
     
     
@@ -219,8 +279,25 @@ class Node():
         """
         Updates the weights of a node. Used for 
         """
-        if self.node_type == 2 or self.node_type == 4:
+        if self.node_type == Node.HIDDEN or self.node_type == Node.OUTPUT:
             for nwp in self.parents:
                 deltaWeight = learning_rate * nwp.node.outputValue * self.delta
                 nwp.weight = nwp.weight + deltaWeight
     
+class Instance():
+    
+    """
+    Represents an instance object: a piece data to be predicted or trained on
+    """
+    value = None
+    
+    
+    def __init__(self, attribute_list, class_value=None):
+        self.attributes=attribute_list
+        self.value = class_value
+    
+    def add_attr(self, value):
+        self.attributes.append(value)
+        
+    def getValue(self):
+        return self.class_value

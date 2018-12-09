@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import random
+import random, json, sys
 import NN
-from Instance import Instance
+import math
 
-numAttributes = 256     # number of attributes per training image
-numDigits = 10          # 0-9
-numHiddenNodes = 10     # number of hidden nodes per layer in the NN
-learning_rate = 0.5     # learning rate has to be between 0 and 1
-maxEpoch = 5            # number of passes to do in the neural network training
-seed = None             # use a seed (not None) to get consistent results from run to run
-training_file = 'train.txt' # name of the file with training data
+def loadJSON(filename):
+    data = open(filename)
+    parameters = json.load(data)
+    data.close()
+    
+    training_file = parameters['data']['training_data']
+    numAttributes = parameters['data']['num_attributes']
+    numDigits = parameters['data']['num_classes']
+    numHiddenNodes = parameters['network']['num_hidden_nodes']
+    learning_rate = parameters['network']['learning_rate']
+    maxEpoch = parameters['network']['max_epochs']
+    seed = parameters['network']['seed']
+    
+    return training_file, numAttributes, numDigits,numHiddenNodes,learning_rate,maxEpoch,seed
 
 def parseTrainSet(training_file):
     
@@ -35,7 +42,7 @@ def parseTrainSet(training_file):
                 break
             digit = digit + 1
                 
-        inst = Instance(attributes, digit) #create the instance
+        inst = NN.Instance(attributes, digit) #create the instance
         inst_list.append(inst) #add the instance to our list
 
     return inst_list
@@ -64,13 +71,40 @@ def randomizeWeights(seed = None):
 
 
 if __name__ == "__main__":
+
+    save = True
+    debug = False    
+    
+    try:
+        #load in the json file from the command line argument and load it
+        json_file = str(sys.argv[1])
+        training_file, numAttributes, numDigits,numHiddenNodes,learning_rate,maxEpoch,seed = loadJSON(json_file)
+        if '-d' in sys.argv:
+            debug = True
+        if '-s' in sys.argv:
+            save = False
+        
+    except:
+        print('Error loading JSON. usage: python train.py <parameter_file.json>')
+        print("OPTIONAL: -d: print losses, -s: don't save weights")
+        exit(1)
+    
     #Open the training data and save it to the training set
     trainingSet = parseTrainSet(training_file)
     
     #randomize the network weights
     (hiddenWeights, outputWeights) = randomizeWeights(seed)
-
+    
     #create a neural network with the input parameters
     neural_net = NN.Network(trainingSet,numAttributes,numDigits, numHiddenNodes, learning_rate, maxEpoch, hiddenWeights, outputWeights, seed)
 
-    neural_net.train();
+    neural_net.train(save_weights = save, loss_output = debug);
+    
+    #%%
+    random_index = math.floor(random.random()*len(trainingSet))
+    
+    inst = trainingSet[random_index]
+    
+    print(inst.value)
+    
+    print("The detected digit is a", neural_net.predict(inst))

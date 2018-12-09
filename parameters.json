@@ -1,0 +1,14 @@
+{
+  "data" : {
+    "num_attributes" : 256,
+    "num_classes" : 10,
+    "training_data" : "train.txt"
+  },
+  
+  "network" : {
+    "num_hidden_nodes" : 50,
+    "learning_rate" : 0.01,
+    "max_epochs" : 50,
+    "seed" : 0
+  }
+}
