@@ -12,8 +12,9 @@ class Network():
     It can be used to train a training set or predict a score given an input
     """
         
-    def __init__(self, trainingSet, number_of_attributes, number_of_values, number_of_hidden_nodes, learningRate, maxEpoch, hiddenWeights, outputWeights, seed = None):
+    def __init__(self, trainingSet, tuningSet, number_of_attributes, number_of_values, number_of_hidden_nodes, learningRate, maxEpoch, hiddenWeights, outputWeights, seed = None):
         self.trainingSet = trainingSet
+        self.tuningSet= tuningSet
         self.numAttributes = number_of_attributes
         self.numValues = number_of_values
         self.numHiddenNodes = number_of_hidden_nodes
@@ -56,8 +57,9 @@ class Network():
 
 
 
-    def train(self, save_weights = True, loss_output = False):
+    def train(self, save_weights = True, debug = False):
         """Computes forward and backward passes for the NN to set the weights"""
+        maxSuccess = 0
         #train for max epochs
         for epoch in range(0, self.maxEpoch):
             
@@ -70,8 +72,8 @@ class Network():
                 self.forwardPass(instance)
                 self.backwardPass(instance)
             
-            if loss_output:
-                #for each instance, compute a loss
+            #for each instance, compute a loss
+            if debug:
                 for inst in self.trainingSet:
                     totalLoss = totalLoss + self.loss(inst)
                 
@@ -79,11 +81,33 @@ class Network():
                 
                 print("Epoch", epoch, "complete with loss:", format(totalLoss, 'e'))
             
-        #save the weights into the file
-        if save_weights: 
-            self.saveWeights()
+            #Compute success rate on tuningSet
+            success = self.successOnTune(epoch, debug)
+            
+            #If the success rate was better than the max, save the weights
+            if success > maxSuccess and save_weights:
+                self.saveWeights()
+                maxSuccess = success
+        
+        print("Best success rate:", maxSuccess)
         
         
+    def successOnTune(self, epoch=None, debug=False):
+        """Computes the network success rate on a tuning set"""
+        success = 0
+        for instance in self.tuningSet:
+            if self.predict(instance) == instance.value:
+                success = success + 1
+        
+        success = success/len(self.tuningSet)
+        
+        if debug and epoch != None:
+            print("Epoch", epoch, "success rate on tuning set:", success)
+
+        return success
+        
+
+    
     def predict(self, instance):
         """Returns the prediction for a given input"""
         self.forwardPass(instance)

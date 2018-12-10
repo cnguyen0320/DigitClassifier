@@ -35,6 +35,13 @@ def loadJSON(filename):
     
     return training_file, numAttributes, numDigits,numHiddenNodes,learning_rate,maxEpoch,seed
 
+def test(network, trainingSet):
+    count = 0
+    for inst in trainingSet:
+        if inst.value == network.predict(inst):
+            count = count + 1
+    return count/len(trainingSet)
+
 if __name__ == '__main__':
     
     try:
@@ -47,20 +54,20 @@ if __name__ == '__main__':
         training_file, numAttributes, numDigits,numHiddenNodes,learning_rate,maxEpoch,seed = loadJSON(json_file)
         
     except:
-        print('Error loading JSON. usage: python train.py <parameter_file> <hiddenweights_file> <outputweights_file' )
+        print('Error loading. usage: python train.py <parameter_file> <hiddenweights_file> <outputweights_file' )
         exit(1)
     
     
     #Creates a network using the parameters set in train.py and the loaded hidden and output weights
-    network = NN.Network(None, numAttributes, numDigits, numHiddenNodes, learning_rate, maxEpoch, hiddenWeights, outputWeights, seed)
+    network = NN.Network(None, None, numAttributes, numDigits, numHiddenNodes, learning_rate, maxEpoch, hiddenWeights, outputWeights)
     
-    #%%
-    inst_list = train.parseTrainSet(train.training_file)
-    
-    random_index = math.floor(random.random()*len(inst_list))
-    
+
+    inst_list = train.parseDataSet(training_file, numAttributes)    
+    random_index = math.floor(random.random()*len(inst_list))    
     inst = inst_list[random_index]
     
-    print(inst.value)
+    print("Known value:", inst.value)
     
     print("The detected digit is a", network.predict(inst))
+    
+    print("success rate: ", test(network, inst_list))

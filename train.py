@@ -16,11 +16,14 @@ def loadJSON(filename):
     numHiddenNodes = parameters['network']['num_hidden_nodes']
     learning_rate = parameters['network']['learning_rate']
     maxEpoch = parameters['network']['max_epochs']
-    seed = parameters['network']['seed']
+    try:
+        seed = int(parameters['network']['seed'])
+    except:
+        seed = None
     
     return training_file, numAttributes, numDigits,numHiddenNodes,learning_rate,maxEpoch,seed
 
-def parseTrainSet(training_file):
+def parseDataSet(training_file, num_attributes):
     
     #open the txt file with training data and read the liens
     file = open(training_file)
@@ -33,11 +36,11 @@ def parseTrainSet(training_file):
     for line in training_set:
         values = line.split(" ")
         attributes = []
-        for i in range(0, numAttributes): #populate the pixel values
+        for i in range(0, num_attributes): #populate the pixel values
             attributes.append(int(float(values[i])))
         
         digit = 0
-        for x in range(numAttributes, len(values)): #find the class of the digit
+        for x in range(num_attributes, len(values)): #find the class of the digit
             if int(values[x]) == 1:
                 break
             digit = digit + 1
@@ -48,26 +51,42 @@ def parseTrainSet(training_file):
     return inst_list
         
 
-def randomizeWeights(seed = None):
-    if not seed == None:
-        random.seed(seed)
-    
+def randomizeWeights(num_hidden, num_attributes, num_values):    
     hiddenWeights = []
     outputWeights = []
     
     #Randomizes weights for hidden nodes
-    for x in range(0, numHiddenNodes):
+    for x in range(0, num_hidden):
         hiddenWeights.append([])
-        for y in range(0, numAttributes+1):
+        for y in range(0, num_attributes+1):
             hiddenWeights[x].append(random.gauss(0,1)*.01)
     
     #Randomizes weights for output nodes
-    for x in range(0, numDigits):
+    for x in range(0, num_values):
         outputWeights.append([])
         for y in range(0, len(hiddenWeights)+1):
             outputWeights[x].append(random.gauss(0,1)*.01)
 
     return(hiddenWeights, outputWeights)
+
+def test(network, trainingSet):
+    count = 0
+    for inst in trainingSet:
+        if inst.value == network.predict(inst):
+            count = count + 1
+    return count/len(trainingSet)
+
+def divideDataSet(data_set, percent_to_train, seed = None):
+    random.seed(seed)
+    
+    train = []
+    tune = []
+    for instance in data_set:
+        if random.uniform(0,1) < percent_to_train:
+            train.append(instance)
+        else:
+            tune.append(instance)
+    return (train, tune)
 
 
 if __name__ == "__main__":
@@ -90,21 +109,15 @@ if __name__ == "__main__":
         exit(1)
     
     #Open the training data and save it to the training set
-    trainingSet = parseTrainSet(training_file)
+    dataSet = parseDataSet(training_file, numAttributes)
+    
+    trainingSet, tuningSet = divideDataSet(dataSet, 0.5, seed)
     
     #randomize the network weights
-    (hiddenWeights, outputWeights) = randomizeWeights(seed)
+    (hiddenWeights, outputWeights) = randomizeWeights(numHiddenNodes,numAttributes,numDigits)
     
-    #create a neural network with the input parameters
-    neural_net = NN.Network(trainingSet,numAttributes,numDigits, numHiddenNodes, learning_rate, maxEpoch, hiddenWeights, outputWeights, seed)
-
-    neural_net.train(save_weights = save, loss_output = debug);
+    #create a neural network with the input parameters and train it
+    network = NN.Network(trainingSet, tuningSet, numAttributes,numDigits, numHiddenNodes, learning_rate, maxEpoch, hiddenWeights, outputWeights, seed)
+    network.train(save, debug);
     
-    #%%
-    random_index = math.floor(random.random()*len(trainingSet))
-    
-    inst = trainingSet[random_index]
-    
-    print(inst.value)
-    
-    print("The detected digit is a", neural_net.predict(inst))
+            
