@@ -13,7 +13,7 @@ import os.path
 
 filename = 'zero.jpg'
 
-def Resize_binary(filename): 
+def resize2binary(filename): 
     name = os.path.splitext(filename)
     
     img = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
@@ -28,16 +28,21 @@ def Resize_binary(filename):
     for i in range(256):
         for j in range(256):    
             if resized[i][j] < 255:
-                resized[i][j] = 0
-            else:
                 resized[i][j] = 1
+            else:
+                resized[i][j] = 0
     
     with open(name[0] + '.txt', 'w') as filehandle:
         for i in range(256):
             for j in range(256): 
                 filehandle.write('%d ' % resized[i][j])
+    
+    #Comment out the else loop and un-comment below to see output
+    #cv2.imshow("Resized image", resized)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
+    
+resize2binary(filename)
                 
 
-#cv2.imshow("Resized image", resized)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
+
