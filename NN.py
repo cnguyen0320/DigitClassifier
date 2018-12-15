@@ -123,7 +123,7 @@ class Network():
                 maxIndex = i
                 maxVal = current
         
-        return maxIndex
+        return maxIndex, maxVal
 
 
 
@@ -277,12 +277,13 @@ class Node():
     
     
     def calculateDeltaOutput(self, targetOutput):
+        """Calculates delta for output nodes during training"""
         if self.node_type == Node.OUTPUT:
             self.delta = targetOutput - self.outputValue
 
     
-    
     def calculateDeltaHidden(self, outputNodes):
+        """Calculates delta for hidden nodes during training"""
         if self.node_type == Node.HIDDEN:
             if self.outputValue == 0:
                 self.delta = 0
@@ -301,15 +302,16 @@ class Node():
     
     def updateWeight(self, learning_rate):
         """
-        Updates the weights of a node. Used for 
+        Updates the weights of a node. Used during back propagation
         """
         if self.node_type == Node.HIDDEN or self.node_type == Node.OUTPUT:
             for nwp in self.parents:
                 deltaWeight = learning_rate * nwp.node.outputValue * self.delta
                 nwp.weight = nwp.weight + deltaWeight
     
-class Instance():
     
+    
+class Instance():
     """
     Represents an instance object: a piece data to be predicted or trained on
     """

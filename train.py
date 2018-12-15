@@ -3,7 +3,6 @@
 
 import random, json, sys
 import NN
-import math
 
 def loadJSON(filename):
     data = open(filename)
