@@ -23,7 +23,7 @@ To run with an input image file:
 
 To run with a hand drawn input using the mouse and an on-screen GUI:
 
-`python train.py <parameter_file> <hiddenweights_file> <outputweights_file>` -d'
+`python train.py <parameter_file> <hiddenweights_file> <outputweights_file> -d`
 
 Press <esc> or <enter> during drawing to run the prediction
 Press <r> to reset the drawing
