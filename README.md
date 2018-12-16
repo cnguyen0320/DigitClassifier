@@ -8,7 +8,8 @@ Training is completed by running train.py.
 Maximum success rate is found on a tuning set and the layer weights are saved into files named hiddenweights.txt and outputweights.txt
 
 `python train.py <parameter_file.json>`
-###Options:
+
+### Options:
 
   -d prints out statistics on loss and tuning set success rate on each epoch
   
