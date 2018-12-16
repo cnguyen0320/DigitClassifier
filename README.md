@@ -27,3 +27,14 @@ To run with a hand drawn input using the mouse and an on-screen GUI:
 
 Press <esc> or <enter> during drawing to run the prediction
 Press <r> to reset the drawing
+
+## Running the program on Euler (Wisconsin Applied Computing Center UW-Madison):
+
+Load python 3.7 using: `module load python/3.7.0`
+
+Install openCV using: `pip3 install --user opencv-python`
+
+Add user packages using: `module load python/0_user/python-site`
+
+Run training and prediction using the same command line arguments as above except use `python3` instead of `python`
+
