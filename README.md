@@ -20,7 +20,7 @@ Prediction is completed by running predict.py
 
 To run with an input image file:
 
-`python train.py <parameter_file> <hiddenweights_file> <outputweights_file>` <inputfile>'
+`python train.py <parameter_file> <hiddenweights_file> <outputweights_file> <inputfile>`
 
 To run with a hand drawn input using the mouse and an on-screen GUI:
 
