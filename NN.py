@@ -96,7 +96,7 @@ class Network():
         """Computes the network success rate on a tuning set"""
         success = 0
         for instance in self.tuningSet:
-            if self.predict(instance) == instance.value:
+            if self.predict(instance)[0] == instance.value:
                 success = success + 1
         
         success = success/len(self.tuningSet)
